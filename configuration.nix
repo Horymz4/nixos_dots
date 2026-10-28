@@ -62,6 +62,7 @@
     jack.enable = true;
   };
 
+    #start
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   #pkgs
@@ -72,15 +73,18 @@
 	vim 
 	git	
     fastfetch
-    
+    nerd-fonts.adwaita-mono   
 ];
 
-  nix.gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 14d";
-    };
   nix.settings.auto-optimise-store = true;
+  programs.nh = {
+  enable = true;
+  clean = {
+    enable = true;
+    dates = "weekly";
+    extraArgs = "--keep 5";
+   };
+  };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."josef" = {

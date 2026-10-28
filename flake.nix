@@ -10,9 +10,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+  areofyl-fetch.url = "github:areofyl/fetch";
   };
 
-  outputs = { nixpkgs, home-manager, plasma-manager, ... }: {
+  outputs = inputs@{ nixpkgs, home-manager, plasma-manager, ... }: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -22,6 +23,7 @@
           home-manager.backupFileExtension = "backup";
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.sharedModules = [ plasma-manager.homeModules.plasma-manager ];
           home-manager.users.josef = import ./home.nix;
         }

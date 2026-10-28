@@ -1,5 +1,8 @@
-{ pkgs, ... }: {
-  imports = [ ./plasma-config.nix ];
+{ pkgs, inputs, ... }: {
+  imports = [ 
+    ./plasma-config.nix
+    inputs.areofyl-fetch.homeManagerModules.default
+  ];
 
   home.stateVersion = "26.05";  # use the version you installed NixOS with
 
@@ -10,15 +13,23 @@
     klassy
   ];
 
+    xdg.dataFile = {
+      "plasma/desktoptheme/MyStyle".source = ./themes/my_custom;
+
+      "plasma/plasmoids/com.github.tilorenz.compact_pager".source =
+        ./themes/com.github.tilorenz.compact_pager;
+      "plasma/plasmoids/org.kde.olib.thermalmonitor".source =
+        ./themes/org.kde.olib.thermalmonitor;
+      "plasma/plasmoids/plasmusic-toolbar".source =
+        ./themes/plasmusic-toolbar;
+    };
+
   xdg.configFile."klassy/klassyrc".source = ./themes/klassyrc;
   programs.plasma.workspace.colorScheme = "BreezeDark"; 
   programs.plasma.workspace.widgetStyle = "Klassy";               #
   programs.plasma.workspace.wallpaper = ./themes/maze_linux2.png;   
   xdg.dataFile."icons/Reversal-pink-dark".source = ./themes/Reversal-pink-dark;
   programs.plasma.workspace.iconTheme = "Reversal-pink-dark";
-  xdg.dataFile = {
-      "plasma/desktoptheme/MyStyle".source = ./themes/my_custom;
-  };
   programs.plasma.workspace.windowDecorations = {
       library = "org.kde.klassy";
       theme = "Klassy";
@@ -41,17 +52,41 @@
   }
   {
     location = "top";
-    height = 38;
+    height = 28;
     lengthMode = "fill"; 
     widgets = [
-      #"org.kde.plasma.compactpager"  
+      "com.github.tilorenz.compact_pager"  
       "org.kde.plasma.panelspacer"
       "org.kde.plasma.digitalclock"
       "org.kde.plasma.panelspacer"
+      "org.kde.olib.thermalmonitor"
       "org.kde.plasma.systemtray"
+      # {
+      # }
+      "org.kde.plasma.shutdownorswitch"
     ];
   }
   ];
+
+  programs.fetch = {
+    enable = true;
+    info = [
+        "os"
+        "kernel"
+        "uptime"
+        "shell"
+        "display"
+        "font"
+        "terminal"
+        "cpu"
+        "memory"
+        "swap"
+        "disk"
+    ];
+    labelColor = "blue";
+    speed = 1.0;
+    spin = "xy";
+  };
 
   home.sessionPath = [ "$HOME/.local/bin" "$HOME/bin" ];
 
