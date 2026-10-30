@@ -1,92 +1,71 @@
-{ pkgs, inputs, ... }: {
-  imports = [ 
+{ pkgs, inputs, lib, ... }:
+let
+  # Copies a plasmoid folder from a source into the place Plasma looks
+  mkPlasmoid = { id, src, subdir ? "." }:
+    pkgs.runCommandLocal "plasmoid-${id}" { inherit src; } ''
+      mkdir -p $out/share/plasma/plasmoids/${id}
+      cp -r $src/${subdir}/. $out/share/plasma/plasmoids/${id}/
+    '';
+
+  compactPager = mkPlasmoid {
+    id = "com.github.tilorenz.compact_pager";
+    subdir = "package";
+    src = pkgs.fetchFromGitHub {
+      owner = "tilorenz";
+      repo = "compact_pager";
+      rev = "main";            # better: pin a commit hash
+      hash = "sha256-q8s+eQAQJVYKMb0rprYdnYBRErYtJDQrLSdnQGzrr+U=";
+    };
+  };
+ plasmusic = mkPlasmoid {
+  id = "plasmusic-toolbar";
+  subdir = "src";
+  src = pkgs.fetchFromGitHub {
+    owner = "ccatterina";
+    repo = "plasmusic-toolbar";
+    rev = "main";
+    hash = "sha256-PLeJuI+T7lec/eF3ethBHbFq+5xFgi+ShmXPpt0Fono=";
+  };
+  };
+in {
+  imports = [
     ./plasma-config.nix
     inputs.areofyl-fetch.homeManagerModules.default
   ];
 
-  home.stateVersion = "26.05";  # use the version you installed NixOS with
+  home.stateVersion = "26.05";
 
   home.packages = with pkgs; [
     neovim
     powerline-go
     fzf
-    klassy
+    compactPager
+    plasmusic
   ];
 
-    xdg.dataFile = {
-      "plasma/desktoptheme/MyStyle".source = ./themes/my_custom;
-
-      "plasma/plasmoids/com.github.tilorenz.compact_pager".source =
-        ./themes/com.github.tilorenz.compact_pager;
-      "plasma/plasmoids/org.kde.olib.thermalmonitor".source =
-        ./themes/org.kde.olib.thermalmonitor;
-      "plasma/plasmoids/plasmusic-toolbar".source =
-        ./themes/plasmusic-toolbar;
-    };
-
-  xdg.configFile."klassy/klassyrc".source = ./themes/klassyrc;
-  programs.plasma.workspace.colorScheme = "BreezeDark"; 
-  programs.plasma.workspace.widgetStyle = "Klassy";               #
-  programs.plasma.workspace.wallpaper = ./themes/maze_linux2.png;   
-  xdg.dataFile."icons/Reversal-pink-dark".source = ./themes/Reversal-pink-dark;
-  programs.plasma.workspace.iconTheme = "Reversal-pink-dark";
-  programs.plasma.workspace.windowDecorations = {
-      library = "org.kde.klassy";
-      theme = "Klassy";
+  xdg.dataFile = {
+    "icons/Reversal-pink-dark".source = ./themes/Reversal-pink-dark;
+    "plasma/desktoptheme/my_custom".source = ./themes/my_custom;
   };
-
-  #panels
-  programs.plasma.panels = [
-  {
-    location = "bottom";
-    height = 44;
-    alignment = "center";     
-    hiding = "dodgewindows";
-    floating = true;
-    lengthMode = "fit"; 
-    widgets = [
-      "org.kde.plasma.kickoff"
-      "org.kde.plasma.pager"
-      "org.kde.plasma.icontasks"
-    ];
-  }
-  {
-    location = "top";
-    height = 28;
-    lengthMode = "fill"; 
-    widgets = [
-      "com.github.tilorenz.compact_pager"  
-      "org.kde.plasma.panelspacer"
-      "org.kde.plasma.digitalclock"
-      "org.kde.plasma.panelspacer"
-      "org.kde.olib.thermalmonitor"
-      "org.kde.plasma.systemtray"
-      # {
-      # }
-      "org.kde.plasma.shutdownorswitch"
-    ];
-  }
-  ];
 
   programs.fetch = {
     enable = true;
     info = [
-        "os"
-        "kernel"
-        "uptime"
-        "shell"
-        "display"
-        "font"
-        "terminal"
-        "cpu"
-        "memory"
-        "swap"
-        "disk"
+      "os" "kernel" "uptime" "shell" "display" "font"
+      "terminal" "cpu" "memory" "swap" "disk"
     ];
     labelColor = "blue";
     speed = 1.0;
     spin = "xy";
   };
+
+  xdg.configFile."autostart/lock-on-login.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Lock on login
+    Exec=loginctl lock-session
+    X-KDE-autostart-phase=1
+  '';
 
   home.sessionPath = [ "$HOME/.local/bin" "$HOME/bin" ];
 
@@ -108,7 +87,7 @@
 
     initExtra = ''
       # User specific bashrc.d snippets
-    if [ -d ~/.bashrc.d ]; then
+      if [ -d ~/.bashrc.d ]; then
         for rc in ~/.bashrc.d/*; do
           if [ -f "$rc" ]; then
             . "$rc"
@@ -125,6 +104,7 @@
       if [[ $TERM != linux && ! $PROMPT_COMMAND =~ _update_ps1 ]]; then
         PROMPT_COMMAND="_update_ps1; $PROMPT_COMMAND"
       fi
+
       # fuzzy search with cd
       fcd() {
         local dir
